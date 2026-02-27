@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>商户推荐</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  background:#f3f4f6;
+}
+.header{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:white;
+  padding:20px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+.tabs{
+  display:flex;
+  overflow-x:auto;
+  background:white;
+  padding:10px;
+  gap:10px;
+}
+.tabs button{
+  flex:none;
+  padding:8px 16px;
+  border:none;
+  border-radius:20px;
+  background:#e5e7eb;
+  cursor:pointer;
+}
+.tabs button.active{
+  background:#2563eb;
+  color:white;
+}
+.container{
+  padding:12px;
+}
+.card{
+  background:white;
+  border-radius:12px;
+  margin-bottom:15px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+}
+.info{
+  padding:12px;
+  text-align:left;
+}
+.name{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:6px;
+}
+.phone{
+  color:#2563eb;
+}
+.pagination{
+  text-align:center;
+  margin:20px;
+}
+.pagination button{
+  margin:5px;
+  padding:8px 14px;
+  border:none;
+  background:#2563eb;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+}
+.pagination button.current{
+  background:#4f46e5;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">优选商户</div>
+
+<div id="tabs" class="tabs"></div>
+<div id="list" class="container"></div>
+<div id="pagination" class="pagination"></div>
+
+<script>
+let DATA={}
+let currentCategory=""
+let currentPage=1
+const pageSize=10
+
+fetch("data.json")
+.then(r=>r.json())
+.then(data=>{
+  DATA=data
+  createTabs()
+})
+
+function createTabs(){
+  let tab=document.getElementById("tabs")
+  Object.keys(DATA).forEach((cat,i)=>{
+    let btn=document.createElement("button")
+    btn.innerText=cat
+    btn.onclick=()=>{
+      document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"))
+      btn.classList.add("active")
+      currentCategory=cat
+      currentPage=1
+      render()
+    }
+    tab.appendChild(btn)
+    if(i===0) btn.click()
+  })
+}
+
+function render(){
+  let list=document.getElementById("list")
+  list.innerHTML=""
+  let shops=DATA[currentCategory]
+  let start=(currentPage-1)*pageSize
+  let pageData=shops.slice(start,start+pageSize)
+  pageData.forEach(shop=>{
+    let div=document.createElement("div")
+    div.className="card"
+    div.innerHTML=`
+      < img src="${shop.img}">
+      <div class="info">
+        <div class="name">${shop.name}</div>
+        <div class="phone">☎ ${shop.phone}</div>
+      </div>
+    `
+    list.appendChild(div)
+  })
+  renderPagination(shops.length)
+}
+
+function renderPagination(total){
+  let pageDiv=document.getElementById("pagination")
+  pageDiv.innerHTML=""
+  let totalPage=Math.ceil(total/pageSize)
+  if(totalPage<=1) return
+
+  // 上一页
+  if(currentPage>1){
+    let prev=document.createElement("button")
+    prev.innerText="上一页"
+    prev.onclick=()=>{currentPage--; render()}
+    pageDiv.appendChild(prev)
+  }
+
+  // 页码按钮
+  for(let i=1;i<=totalPage;i++){
+    let btn=document.createElement("button")
+    btn.innerText=i
+    if(i===currentPage) btn.classList.add("current")
+    btn.onclick=(()=>{
+      let page=i
+      return ()=>{currentPage=page; render()}
+    })()
+    pageDiv.appendChild(btn)
+  }
+
+  // 下一页
+  if(currentPage<totalPage){
+    let next=document.createElement("button")
+    next.innerText="下一页"
+    next.onclick=()=>{currentPage++; render()}
+    pageDiv.appendChild(next)
+  }
+}
+</script>
+
+</body>
+</html>
